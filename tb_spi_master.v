@@ -120,6 +120,30 @@ module tb_spi_master;
             $display("[%0t] ERRO! Esperado 81, Recebido: %h", $time, rx_data);
 
         #1000;
+
+        // --- TRANSACAO 3: Testando CPHA=1 (Modo 1: CPOL=0, CPHA=1) ---
+        // No CPHA=1, a primeira borda do SCLK é de setup (dado já está no MOSI).
+        // A amostragem ocorre na segunda borda de cada bit.
+        dord    = 0;  // MSB-First
+        cpha    = 1;
+        tx_data = 8'hA5; // 10100101 — mesmo byte do Teste 1 para comparação
+        $display("\n[%0t] Transmitindo Byte (CPHA=1, MSB-First): %h", $time, tx_data);
+
+        @(posedge clk_sys);
+        start_tx = 1;
+
+        wait(cs_n == 1'b0);
+        @(posedge clk_sys);
+        start_tx = 0;
+
+        wait(done_flag == 1'b1);
+
+        if (rx_data === 8'hA5)
+            $display("[%0t] SUCESSO! Loopback CPHA=1 recebido: %h", $time, rx_data);
+        else
+            $display("[%0t] ERRO! Esperado A5, Recebido: %h (CPHA=1 com bug de deslocamento)", $time, rx_data);
+
+        #1000;
         $display("--------------------------------------------------");
         $display("SIMULACAO CONCLUIDA COM EXITO.");
         $finish;
