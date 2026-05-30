@@ -23,8 +23,8 @@ module spi_clk_gen #(
     reg [COUNT_WIDTH-1:0] counter;
 
     // --- Geração do Edge Tick ---
-    // O tick é emitido examente no ciclo em que o contador atinge seu limite.
-    // Isso avisa a FSM que no próximo ciclo de clk_sys o sclk_out vai mudar de estado.
+    // O tick é emitido no mesmo ciclo em que sclk_out é registrado com o novo valor.
+    // A FSM e o Datapath reagem a edge_tick no mesmo posedge clk_sys em que a borda ocorre.
     assign edge_tick = (en_sclk && (counter == MAX_COUNT - 1));
 
     // --- Lógica Sequencial do Gerador ---

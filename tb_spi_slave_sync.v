@@ -4,6 +4,7 @@ module tb_spi_slave_sync;
     // --- Sinais do Sistema ---
     reg  clk_sys;
     reg  rst_n;
+    reg  cpol;
 
     // --- Sinais Físicos Assíncronos (Vindos do Master) ---
     reg  sclk_in;
@@ -20,6 +21,7 @@ module tb_spi_slave_sync;
     spi_slave_sync dut (
         .clk_sys(clk_sys),
         .rst_n(rst_n),
+        .cpol(cpol),
         .sclk_in(sclk_in),
         .cs_n_in(cs_n_in),
         .mosi_in(mosi_in),
@@ -43,6 +45,7 @@ module tb_spi_slave_sync;
 
         // 1. Estado Inicial de Repouso
         rst_n   = 0;
+        cpol    = 0; // CPOL=0: SCLK ocioso em nível baixo
         sclk_in = 0;
         cs_n_in = 1;
         mosi_in = 0;

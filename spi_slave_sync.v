@@ -1,16 +1,17 @@
 module spi_slave_sync (
     input  wire clk_sys,      // Clock rápido do sistema local
     input  wire rst_n,        // Reset assíncrono
-    
+    input  wire cpol,         // Polaridade do clock (0 = ocioso baixo, 1 = ocioso alto)
+
     // Pinos físicos assíncronos vindos do Mestre
     input  wire sclk_in,
     input  wire cs_n_in,
     input  wire mosi_in,
-    
+
     // Sinais sincronizados e limpos para uso interno do Escravo
     output wire cs_n_sync,
     output wire mosi_sync,
-    
+
     // Pulsos de gatilho (Duram exatamente 1 ciclo de clk_sys)
     output wire sclk_rise,
     output wire sclk_fall
@@ -41,8 +42,9 @@ module spi_slave_sync (
     // --- Processo Sequencial de Amostragem ---
     always @(posedge clk_sys or negedge rst_n) begin
         if (!rst_n) begin
-            // No reset, assumimos o barramento ocioso (CS alto, SCLK baixo)
-            sclk_reg <= 3'b000;
+            // No reset, todos os estágios assumem o estado ocioso do barramento:
+            // CS alto, MOSI indefinido (0), SCLK no nível ocioso definido por CPOL.
+            sclk_reg <= {3{cpol}};
             cs_n_reg <= 2'b11;
             mosi_reg <= 2'b00;
         end else begin
