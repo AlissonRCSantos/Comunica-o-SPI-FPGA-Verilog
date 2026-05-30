@@ -81,8 +81,12 @@ module spi_controller (
             end
             
             END: begin
-                // Fica 1 ciclo para o teardown (desligar CS e Clock) e volta a dormir
-                next_state = IDLE;
+                // Se o sistema superior já estiver pedindo uma nova transmissão (Back-to-Back),
+                // pula o IDLE e vai direto para a preparação do novo byte.
+                if (start_tx)
+                    next_state = START;
+                else
+                    next_state = IDLE;
             end
             
             default: next_state = IDLE;
