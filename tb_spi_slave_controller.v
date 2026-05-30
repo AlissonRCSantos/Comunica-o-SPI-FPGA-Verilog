@@ -1,4 +1,4 @@
-
+// xrun -clean tb_spi_slave_controller.v spi_slave_controller.v +access+rwc -gui
 module tb_spi_slave_controller;
 
     // --- Sinais do Sistema ---
