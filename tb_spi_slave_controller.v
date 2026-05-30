@@ -1,4 +1,5 @@
-// xrun -clean tb_spi_slave_controller.v spi_slave_controller.v +access+rwc -gui
+`timescale 1ns / 1ps
+
 module tb_spi_slave_controller;
 
     // --- Sinais do Sistema ---
@@ -102,12 +103,21 @@ module tb_spi_slave_controller;
         cs_n_sync = 0; // Escravo ativado
         #50;
 
-        for (i = 0; i < 8; i = i + 1) begin
-            injetar_borda(1); // Injeta sclk_rise
-            injetar_borda(0); // Injeta sclk_fall
-        end
-
-        wait(rx_done_flag == 1'b1);
+        // Implementação do fork...join para evitar perda do pulso da flag
+        fork
+            begin
+                // Thread 1: Injeta os sinais físicos
+                for (i = 0; i < 8; i = i + 1) begin
+                    injetar_borda(1); // Injeta sclk_rise
+                    injetar_borda(0); // Injeta sclk_fall
+                end
+            end
+            begin
+                // Thread 2: Vigia a flag simultaneamente
+                wait(rx_done_flag == 1'b1);
+                $display("   [INFO] Flag capturada com sucesso pela Thread 2 no Caso 1!");
+            end
+        join
         
         // Retorna o barramento ao estado ocioso
         @(posedge clk_sys);
@@ -132,18 +142,27 @@ module tb_spi_slave_controller;
         cs_n_sync = 0; // Escravo ativado
         #50;
 
-        for (i = 0; i < 8; i = i + 1) begin
-            injetar_borda(0); // Injeta sclk_fall (Borda Líder no Modo 3)
-            injetar_borda(1); // Injeta sclk_rise (Borda Final no Modo 3)
-        end
-
-        wait(rx_done_flag == 1'b1);
+        // Implementação do fork...join para o Caso 2
+        fork
+            begin
+                // Thread 1: Injeta os sinais físicos invertidos
+                for (i = 0; i < 8; i = i + 1) begin
+                    injetar_borda(0); // Injeta sclk_fall (Borda Líder)
+                    injetar_borda(1); // Injeta sclk_rise (Borda Final)
+                end
+            end
+            begin
+                // Thread 2: Vigia a flag simultaneamente
+                wait(rx_done_flag == 1'b1);
+                $display("   [INFO] Flag capturada com sucesso pela Thread 2 no Caso 2!");
+            end
+        join
         
         @(posedge clk_sys);
         cs_n_sync = 1; 
 
         if (contagem_shift == 8 && contagem_sample == 8)
-            $display("   [OK] Lógica CPHA/CPOL abstrata funcionou.");
+            $display("   [OK] Logica CPHA/CPOL abstrata funcionou.");
         else
             $display("   [ERRO] Falha na contagem do Modo 3.");
 
@@ -152,7 +171,7 @@ module tb_spi_slave_controller;
         // ==========================================
         // CASO 3: Aborto Abrupto (Falha de Comunicação)
         // ==========================================
-        $display("\n-> Caso 3: Aborto no meio da transmissão");
+        $display("\n-> Caso 3: Aborto no meio da transmissao");
         cpol = 0; cpha = 0;
         
         @(posedge clk_sys);
