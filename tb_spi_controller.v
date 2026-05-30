@@ -138,17 +138,26 @@ module tb_spi_controller;
             $display("[ERRO] Contagem falhou.");
 
         // ==========================================
-        // CASO 3: Gatilho Back-to-Back
+        // CASO 3: Gatilho Back-to-Back VERDADEIRO
         // ==========================================
         $display("\nIniciando Caso 3: Back-to-Back");
-        // start_tx sobe no exato momento em que done_flag for 1
-        @(posedge clk_sys);
-        start_tx = 1;
+        
+        // Levanta o start_tx IMEDIATAMENTE após o fim do Caso 2.
+        // Não esperamos o posedge clk_sys aqui. Isso injeta o gatilho 
+        // no exato momento em que a FSM está no estado END.
+        start_tx = 1; 
+        
+        // A FSM vai avaliar isso no próximo clock e pular direto para START.
+        // Esperamos a confirmação da FSM (CS caindo para zero).
+        wait(cs_n == 1'b0); 
+        
+        // Agora a FSM já engatou a nova transmissão, podemos abaixar o gatilho com segurança.
         @(posedge clk_sys);
         start_tx = 0;
         
+        // Aguarda a flag de fim desta nova transmissão
         wait(done_flag == 1'b1);
-        $display("Transmissão 3 concluída.");
+        $display("Transmissão 3 (Back-to-Back) concluída.");
 
         #100;
         $display("Teste da FSM Finalizado.");
