@@ -1,4 +1,4 @@
-// xrun -clean tb_spi_slave_datapath.v spi_slave_datapath.v +access+rwc -gui
+`timescale 1ns / 1ps
 
 module tb_spi_slave_datapath;
 
@@ -79,4 +79,58 @@ module tb_spi_slave_datapath;
                 @(posedge clk_sys);
                 sample_en = 0;
 
-                // -- Pulso de
+                // -- Pulso de Deslocamento (FSM detectou borda oposta) --
+                // Nota: No 8º bit, geralmente não há deslocamento útil na prática, 
+                // mas a FSM emite o pulso para limpar o registrador.
+                @(posedge clk_sys);
+                shift_en = 1;
+                @(posedge clk_sys);
+                shift_en = 0;
+            end
+
+            // 4. Verificação Final do Byte Recebido (RX Data)
+            @(posedge clk_sys);
+            if (rx_data === byte_simulado_receber)
+                $display("[SUCESSO] Byte recebido perfeitamente! (TX: %h | RX: %h | DORD: %0b)", 
+                         byte_para_transmitir, rx_data, modo_dord);
+            else
+                $display("[ERRO] Byte corrompido. Recebido: %h, Esperado: %h", rx_data, byte_simulado_receber);
+        end
+    endtask
+
+    // --- Rotina Principal de Testes ---
+    initial begin
+        // Geração do banco de ondas
+        $dumpfile("ondas_slave_datapath.vcd");
+        $dumpvars(0, tb_spi_slave_datapath);
+
+        // Estado inicial
+        rst_n = 0; load_en = 0; shift_en = 0; sample_en = 0; dord = 0; mosi_sync = 0; tx_data = 0;
+        
+        #100;
+        rst_n = 1;
+        #50;
+
+        $display("--------------------------------------------------");
+        $display("INICIANDO TESTE DO DATAPATH DO ESCRAVO");
+        $display("--------------------------------------------------");
+
+        // Teste 1: MSB-First
+        // Escravo tenta enviar 0x5A (01011010) e recebe 0x3C (00111100)
+        $display("-> Executando Teste 1: MSB-First (DORD = 0)");
+        simular_fsm_escravo(8'h5A, 8'h3C, 0);
+
+        #100;
+
+        // Teste 2: LSB-First
+        // Escravo tenta enviar 0xCA (11001010) e recebe 0xF0 (11110000)
+        $display("-> Executando Teste 2: LSB-First (DORD = 1)");
+        simular_fsm_escravo(8'hCA, 8'hF0, 1);
+
+        #100;
+        $display("--------------------------------------------------");
+        $display("SIMULACAO CONCLUIDA.");
+        $finish;
+    end
+
+endmodule
