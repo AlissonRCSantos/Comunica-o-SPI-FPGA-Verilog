@@ -1,3 +1,4 @@
+// xrun -clean tb_spi_master.v spi_master.v spi_controller.v spi_datapath.v spi_clk_gen.v +access+rwc -gui
 module tb_spi_master;
 
     // --- Sinais do Sistema ---
