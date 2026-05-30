@@ -121,14 +121,18 @@ module spi_controller (
                 cs_n    = 1'b0;
                 en_sclk = 1'b1;
                 
-                // Lógica elegante para tratar CPHA:
-                // Se CPHA = 0: Amostra nas bordas pares (0, 2, 4...) e Desloca nas ímpares (1, 3...)
-                // Se CPHA = 1: Desloca nas bordas pares (0, 2, 4...) e Amostra nas ímpares (1, 3...)
+                // Lógica para tratar CPHA:
+                // CPHA=0: Amostra nas bordas pares (0,2,4...) e Desloca nas ímpares (1,3...)
+                // CPHA=1: Borda 0 é inativa (dado já está no MOSI via load_en em START).
+                //         A partir da borda 1: Amostra nas ímpares (1,3...) e Desloca nas pares (2,4...)
                 if (edge_tick) begin
-                    if (edge_cnt[0] == cpha)
+                    if (cpha && (edge_cnt == 4'd0)) begin
+                        // Borda de setup do CPHA=1: bit 7 já está no MOSI, não desloca
+                    end else if (edge_cnt[0] == cpha) begin
                         sample_en = 1'b1;
-                    else
+                    end else begin
                         shift_en = 1'b1;
+                    end
                 end
             end
             
