@@ -1,4 +1,4 @@
-xrun -clean tb_spi_controller.v spi_controller.v +access+rwc -gui
+//xrun -clean tb_spi_controller.v spi_controller.v +access+rwc -gui
 module tb_spi_controller;
 
     // --- Sinais do Testbench ---
